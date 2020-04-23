@@ -14,7 +14,7 @@ app.get('/', (req, res) => {
 });
 
 const createImageFromStream = () => {
-  const command = `ffmpeg -y -i rtsp://${CAM_USER}:${CAM_PASS}@${CAM_ADDRESS} -vframes 1 /tmp/output.jpg`;
+  const command = `ffmpeg -y -i rtsp://${CAM_USER}:${CAM_PASS}@${CAM_ADDRESS} -vframes 1 /tmp/output.jpg > /dev/null`;
   execSync(command);
 }
 
@@ -22,4 +22,4 @@ const createImageFromStream = () => {
 createImageFromStream();
 setInterval(() => createImageFromStream(), 1000 * 60);
 
-app.listen(8080);
+app.listen(8080, '0.0.0.0');
