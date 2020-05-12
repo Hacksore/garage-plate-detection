@@ -1,13 +1,13 @@
-name: Test
+name: Build
 
 on: [push]
 
 jobs:
   build:
-    name: Build
+    name: docker build & push
     runs-on: ubuntu-latest
     steps:
-      - name: Docker build & push
+      - name: docker/build-push
         uses: docker/build-push-action@v1
         with:
           username: ${{ secrets.DOCKER_USERNAME }}
