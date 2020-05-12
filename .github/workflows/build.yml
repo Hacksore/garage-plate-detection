@@ -7,6 +7,8 @@ jobs:
     name: docker build & push
     runs-on: ubuntu-latest
     steps:
+      - name: checkout scm
+        uses: actions/checkout@v2
       - name: docker/build-push
         uses: docker/build-push-action@v1
         with:
