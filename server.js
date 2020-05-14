@@ -1,28 +1,48 @@
 const express = require('express');
 const app = express();
-const { execSync } = require('child_process');
+const { spawn } = require('child_process');
 const { CAM_USER, CAM_PASS, CAM_ADDRESS } = process.env;
 
 let detectedOutput = {
-  results: []
+  results: [],
 };
+let lastUpdate = null;
 
 app.get('/', (req, res) => {
-  const results = detectedOutput.results
+  const results = detectedOutput.results;
   const detected = results.length > 0;
-  const plates = results.length > 0 ? results[0].candidates : [];
-  
-  return res.send({ 
+  const plates = detected > 0 ? results[0].candidates : [];
+
+  return res.send({
     detected,
-    plates
+    plates,
+    updated: lastUpdate,
   });
 });
 
 const createImageFromStream = () => {
-  const command = `ffmpeg -hide_banner -loglevel panic -y -i rtsp://${CAM_USER}:${CAM_PASS}@${CAM_ADDRESS} -vframes 1 /tmp/output.jpg > /dev/null`;
-  execSync(command);
-  detectedOutput = JSON.parse(execSync('alpr /tmp/output.jpg -j').toString());
-}
+  const screenshotCommand = spawn('ffmpeg', [
+    '-hide_banner',
+    '-loglevel',
+    'panic',
+    '-y',
+    '-i',
+    `rtsp://${CAM_USER}:${CAM_PASS}@${CAM_ADDRESS}`,
+    '-vframes',
+    '1',
+    '/tmp/output.jpg',
+  ]);
+
+  screenshotCommand.on('exit', () => processImage());
+};
+
+const processImage = () => {
+  const handle = spawn('alpr', ['/tmp/output.jpg', '-j']);
+  handle.stdout.on('data', (data) => {
+    detectedOutput = JSON.parse(data.toString());
+    lastUpdate = Math.floor(new Date() / 1000);
+  });
+};
 
 // take image from stream
 createImageFromStream();
