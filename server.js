@@ -1,7 +1,9 @@
 const express = require('express');
 const app = express();
 const { spawn } = require('child_process');
+
 const { CAM_USER, CAM_PASS, CAM_ADDRESS } = process.env;
+const REFRESH_INTERVAL = process.env.REFRESH_INTERVAL || 60;
 
 let detectedOutput = {
   results: [],
@@ -33,7 +35,14 @@ const createImageFromStream = () => {
     '/tmp/output.jpg',
   ]);
 
-  screenshotCommand.on('exit', () => processImage());
+  screenshotCommand.on('exit', (exitCode) => {
+    // don't do anything if we can't get an image from the stream
+    if (exitCode > 0) {
+      return;
+    }
+
+    processImage();
+  });
 };
 
 const processImage = () => {
@@ -48,6 +57,6 @@ const processImage = () => {
 createImageFromStream();
 
 // update every minute
-setInterval(() => createImageFromStream(), 1000 * 60);
+setInterval(() => createImageFromStream(), 1000 * REFRESH_INTERVAL);
 
 app.listen(8080, '0.0.0.0');
